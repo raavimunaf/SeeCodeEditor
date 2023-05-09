@@ -1,0 +1,3462 @@
+<!-- 
+
+DONE
+
+Generating if Code 
+exporting else code if active
+taking c code
+
+ondrop focus to first 
+on tab press move to next area
+use backspace to erase previous invarea blocks or previous blocks
+making two functions appear seperate by adding space by css margin-block: 20px; i.e. top and bottom
+
+TODO
+
+decrease color saturation of a block occurring large number of times
+
+using different color ranges for if while for is better
+colors with opposite levels are better for two touching blocks
+keeping same color to calls of function by same name
+include block : low saturation and dim 
+if block : medium saturation
+function calls: high saturation and temperature
+
+
+This code problem
+''''''''''
+#define IRQ_SEL2                    (*(volatile uint32_t*)(CIRQ_base + 0x0208))                     //Source selection 8 to 0xB
+#define IRQ_SEL3                    (*(volatile uint32_t*)(CIRQ_base + 0x020C))                     //Source selection 0xC to 0xF
+#define IRQ_SEL4                    (*(volatile uint32_t*)(CIRQ_base + 0x0210))                     //Source selection 0x10 to 0x12
+
+//x - SelNum
+//v - SourceNum
+#define IRQ_SEL(x, v)   do\
+                        {\
+                            (*(volatile uint32_t*)(CIRQ_base + 0x0200 + 4 * ((x) >> 2))) &= ~(0xFF << (8 * ((x) & 0x03)));\
+                            (*(volatile uint32_t*)(CIRQ_base + 0x0200 + 4 * ((x) >> 2))) |= ((v) & 0x3F) << (8 * ((x) & 0x03));\
+                        }\
+                        while(0)
+
+//CIRQ Interrupt Sources
+#define IRQ_TDMA_CODE               0x00
+#define IRQ_CTIRQ1_CODE             0x01
+#define IRQ_CTIRQ2_CODE             0x02
+#define IRQ_GPI_CODE                0x03
+
+''''''''''
+
+
+
+use backspace to erase previous invarea blocks or previous blocks: focus to last present or create after the last present
+
+continue creating blocks as possible on typing n input
+
+better foundtemplates 
+found code suggestions selection using arrow keys
+
+do live code to block conversion inline as soon as input is valid on keypress
+
+Text Editor feel keyboard operation
+
+
+
+on arrow move to next and previous areas
+
+
+
+
+
+
+exporting blocks to C code full
+
+#include <> and "" switching button
+
+on drop datatype if it is not varea create a block-varea
+
+todo blocks:
+function
+class
+variables
+statics
+
+search for repeating pattern and generate a function and replace by function call at those repeating pattern locations
+
+
+previewing walkthrough of complete conversion steps line to line and execution steps 
+
+dragdrop with scroll
+
+dragselect
+
+
+Block Types and Area Types
+Suggestive Blocks
+
+automatic code folding for readability all the includes
+ -->
+
+
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8"/>
+	<title>Mainline</title>
+	<!-- <link rel="stylesheet" type="text/css" href="main.css"> -->
+<style type="text/css">
+	
+		.block{
+			height: auto;
+			min-height: 20px;
+			width: auto;
+			min-width: 30px;
+			background: rgba(100,100,100,0.2);
+			margin:1px;
+			padding: 3px;
+			transition-property: margin-bottom, margin-top;
+			transition-duration: 0.1s;
+			/*transition: padding-bottom 0.1s;*/
+			transition-delay: 1s;
+		}
+
+/*
+		div.header{
+			position: sticky;
+			top: 0;
+		}*/
+/*
+		.block:hover{
+			padding: 5px;
+			display: block
+		}
+		.block .area:hover{
+			height: : 2px;
+		}*/
+		.area{
+			height: auto;
+			min-height: 20px;
+			width: auto;
+			min-width: 30px;
+			padding: 3px;
+			transition: padding-bottom 0.1s;
+			transition-delay: 0.5s;
+		
+			border-style: solid;
+			border-width:0px;
+			border-left-width: 1px;
+			margin:3px;
+			background: rgba(255,255,255,0.4);
+			/*position: relative;*/
+		}
+		.darkmode .area{
+			height: auto;
+			min-height: 20px;
+			width: auto;
+			min-width: 30px;
+			padding: 3px;
+			transition: padding-bottom 0.1s;
+			transition-delay: 0.5s;
+		
+			border-style: unset;
+			margin:3px;
+			background: rgba(255,255,255,0.4);
+		}
+		body.darkmode{
+			/*background-color: darkgrey;*/
+			background-color: #1e1e1e;
+		}
+		.darkmode .block{
+			color: black;
+			border-radius: 10px;
+		}
+		.darkmode .area{
+			color: white;
+			background: rgba(0, 0, 0, 0.17);
+			border-radius: 13px;
+		}
+		.darkmode #templates{
+			color: white;
+			background: rgba(0,0,0,0.17);
+		}
+		.darkmode #templates .block{
+			background: rgba(255,255,255,0.43);
+		}
+		.darkmode button {
+		    background: #000000;
+		    border: none;
+		    color: #808080;
+		}
+		.darkmode.optimised .area{
+			background: rgba(0,0,0,0.2);
+		}
+		.darkmode.realistic .area{
+			background: rgba(0,0,0,0.2);
+		}
+
+		.darkmode #area{
+			background: rgba(0,0,0,0.43);
+		}
+		.darkmode .foldable-else{
+			/*color: black;*/
+		}
+		.darkmode .active, .darkmode .foldable-else:hover{
+			padding-right: 5px;
+			padding-left: 5px;
+
+			border-radius: 10px 10px 0px 0px;
+		}
+		.darkmode .content-else{
+			border-radius: 0px 0px 10px 10px;
+		}
+
+		.optimised .block{
+			box-shadow: 5px 0px 10px 0px black;
+		}
+		.optimised .area{
+			box-shadow: 100px 0px 50px 0px rgba(0,0,0,0.7) inset
+		}
+
+		.realistic .block{
+			box-shadow: 5px 0px 10px 0px black, 40px 0px 20px 0px rgba(0,0,0,0.5);
+		}
+		.realistic .area{
+			box-shadow: 5px 0px 10px 0px black inset, 100px 0px 50px 0px rgba(0,0,0,0.7) inset
+		}
+
+
+
+		.darkmode .block:hover{
+			background: rgba(0,0,0,0.5);
+		}
+		.darkmode .templates .block{
+			transition-property: background;
+			transition-delay: 0s;
+			transition-duration: 0.5s;
+		}
+		/*
+		.darkmode #code{
+			font-family: monospace;
+		}*/
+
+		.wide .area div{
+			height: auto;
+			width: max-content;
+		}
+
+		#code {
+  			white-space: pre;
+			color:white;
+			background-color: black;
+		}
+
+
+		#parser {
+  			white-space: pre;
+			color:white;
+			background-color: grey;
+/*
+			max-height: 50px;
+			overflow: hidden;*/
+		}
+/*
+		#parser:hover{
+			max-height: auto;
+			overflow: none;
+		}*/
+
+		.small div{
+			display: flex;
+		}
+
+		.smaller div{
+			display: inline-flex;
+		}
+
+		.smallest div{
+			height: 10px;
+			display: inline-flex;
+		}
+
+
+		.area.hover{
+			transition: padding-bottom 0.01s;
+			/*transition-delay: 0.5s;*/
+			transition-delay: 0.0s;
+			padding-bottom: 30px;
+
+		}
+
+
+		.varea.hover{
+/*			transition: padding-bottom 0.01s, padding-top 0.01s;
+*/			/*transition-delay: 0.5s;*/
+			transition-delay: 0.0s;
+			/*padding-bottom: 3px;*/
+			padding-top:50px;
+			padding-bottom:50px;
+			padding-right: 50px;
+		}
+
+
+		.block.marginafter{
+			/*transition: margin-bottom 0.01s;*/
+			transition-delay: 0.0s;
+			margin-bottom: 50px;
+		}
+		.block.marginbefore{
+			/*transition: margin-top 0.01s;*/
+			transition-delay: 0.0s;
+			margin-top: 50px;
+		}
+
+		.varea .block{
+			display: inline;
+		}
+		.varea .block.marginafter{
+			/*transition: margin-bottom 0.01s;*/
+			transition-delay: 0.0s;
+			margin-bottom: 0px;
+			margin-right: 50px;
+		}
+		.varea .block.marginbefore{
+			/*transition: margin-top 0.01s;*/
+			transition-delay: 0.0s;
+			margin-top: 0px;
+			margin-left: 50px;
+		}
+
+		.block{
+			border-color: black;		
+		}
+		.area{
+			border-color: black;
+		}
+		#area{
+			border-color: black;
+			padding-bottom: 50px;
+		}
+
+		#templates {
+			background: #ececec;
+			/*overflow: scroll;*/
+		}
+
+		.templates .block{
+			display: inline-block;
+			/*display: table-cell;*/
+			vertical-align: top;
+			height: auto;
+			width: auto;
+			/*margin: 5px;*/
+		}
+
+		.foundtemplates .block{
+			display: none;
+		}
+
+		.foundtemplates .found{
+			display: inline-block;
+		}
+
+		.block-if {
+			border-left-width: 0px;
+		}
+
+		.block-function {
+			border-left-width: 5px;
+			border-color: green;
+			margin-top: 20px;
+		}
+
+
+		.header{
+			/*padding: 0;*/
+			/*margin: 0;*/
+			display: table-cell;
+			height: auto;
+			min-height: 20px;
+			/*padding-right: 3px;*/ 
+		}
+		.header .area{
+			min-width: 20px;
+			vertical-align: baseline;
+			padding: 0px;
+		}
+		.header div.hidden{
+			display: none;
+		}
+		.header div{
+			display: table-cell;
+			margin: 0;
+			/*padding-right: 5px;*/
+			vertical-align: baseline;
+		}
+		.header .type {
+			padding-right: 5px; 
+		}
+
+		.type-function, .space-function, .name-function,.symbol-arg-start-function, .area-arg-function,.symbol-arg-end-function{
+			min-width: auto;
+			/*float: left;*/
+			/*display: inline;*/
+			margin: 5px;
+		}
+
+
+		.foldable-else {
+  background-color: rgba(0,0,0,0.1);
+  color: rgba(0,0,0,0.1);
+  cursor: pointer;
+  border: none;
+  text-align: left;
+  outline: none;
+/*  float: left;
+  position: absolute;*/
+  display: inline;
+  margin-top: -10px;
+}
+
+.active, .foldable-else:hover {
+  background-color: rgba(0,0,0,0.5);
+  color: rgba(0,0,0,1);
+  display: block;
+  float: none;
+  position: relative;
+  margin-top: 0;
+}
+
+.active.foldable-else:hover:after{
+ 	color:red;
+ 	content: "X";
+ 	font-size: 18px;
+}
+
+.header-folder{
+	display: inline;
+}
+
+.foldable-folder {
+	float: left;
+	display: block;
+	padding-right: 5px;
+}
+
+.content-else {
+  background-color: rgba(0,0,0,0.5);
+}
+
+.area-arg-folder.area {
+    display: inline-block;
+    /*min-width: 20px;*/
+}
+
+.block-comment, .block-big-comment{
+display: none;
+}
+
+.block-string .area-arg-string{
+	white-space: pre;
+}
+
+/*
+.block-comment, .block-big-comment{
+	max-height: 20px;
+	overflow: hidden;
+}
+*/
+
+
+
+/*always keep hidden last for high priority*/
+
+div.foldable-content {
+  display: none;
+  overflow: hidden;
+}
+
+.hidden{
+	visibility: hidden;
+	display: none;
+}
+
+
+#progressbar-body{
+    width: 100%;
+    position: absolute;
+    left: 0;
+    display: inline-block;
+}
+#progressbar-bar{
+	width: 0%;
+	padding: 2px;
+	background: lime;
+	margin-top: -10px;
+	overflow: hidden;
+	top: -10px;
+	position: absolute;
+	box-shadow: 0 0px 40px 10px greenyellow;
+}
+
+.block {
+/*    display: block;
+    position: absolute;
+*/
+  /*position: relative;*/
+} 
+
+.block .tooltip {
+  visibility: hidden;
+  width: 120px;
+  background-color: black;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 0;
+  position: absolute;
+  z-index: 1;
+  bottom: 100%;
+  left: 50%;
+  margin-left: -60px;
+}
+
+.block .tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: black transparent transparent transparent;
+}
+
+.block:hover .tooltip{
+  visibility: visible;
+}
+.toolbar{
+ 	position: fixed;
+ 	bottom: 0;
+   	left: 0;
+	z-index: 2;
+	background-color: white;
+	padding: 10px;
+	border-radius: 10px;
+	margin:20px;
+}
+
+.expandbtn{
+/*	position: absolute;
+	top: 10px;
+	right: 10px;*/
+	display: table-cell;
+}
+
+/*		#input {
+			width: 100%;
+		}*/
+
+/*
+		<div id="block-function">
+	<div id="type-function">int</div>
+	<div id="space-function"> </div>
+	<div id="name-function">blit</div>
+	<div id="symbol-arg-start-function">(</div>
+	<div id="area-arg-function"></div>
+	<div id="symbol-arg-end-function">)</div>
+	<div id="symbol-area-start-function">{</div>
+	<div id="area-function"></div>
+	<div id="symbol-area-end-function">}</div>
+</div>*/
+
+</style>
+</head>
+<!-- <body class="darkmode optimised"> -->
+<body class="darkmode">
+<!-- <br><br><br><br><br> -->
+View
+<button onclick="$('#area').removeClass('small smaller smallest');">normal</button>
+<button onclick="$('#area').addClass('small');$('#area').removeClass('smaller smallest')">small</button>
+<button onclick="$('#area').addClass('smaller');$('#area').removeClass('small smallest')">smaller</button>
+<button onclick="$('#area').addClass('smallest');$('#area').removeClass('small smaller')">smallest</button>
+Color
+<button onclick="coloring = false">same</button>
+<button onclick="coloring = true">change</button>
+Theme
+<button onclick="$('body').toggleClass('darkmode');">Dark</button>
+Layout
+<button onclick="$('body').toggleClass('wide');">Wide</button>
+Shadow
+<button onclick="$('body').toggleClass('realistic');">realistic</button>
+<button onclick="$('body').toggleClass('optimised');">optimised</button>
+
+int main
+<div id="area" class="area minimize" ondrop="drop(event)" ondragover="allowDrop(event)" onclick="areaclick(event)"></div>
+
+<!-- todo new areaclick vs old blockclick testing -->
+
+
+<div id="removearea" class="area minimize" ondrop="removedrop(event)" ondragover="allowDrop(event)">Remove</div>
+
+<div id="templates" class="templates area" ondrop="droptemplates(event)" ondragover="allowDrop(event)">
+	
+<div id="block" class="block-area block" draggable="true" ondragstart="drag(event)" onclick="blockclick(event)"><div class="area"></div></div>
+
+<div id="block-input" class="block-input block area" draggable="true" ondragstart="drag(event)" onclick="blockclick(event)"></div>
+
+<div id="block-bracket" class="block-bracket block" draggable="true" ondragstart="drag(event)" onclick="blockclick(event)" >
+
+	<div class="header header-bracket">
+		<div class="symbol-arg-start-bracket">(</div>
+		<div class="area-arg-bracket area varea"></div>
+		<div class="symbol-arg-end-bracket">)</div> 
+	</div>
+
+</div>
+
+<div id="block-string" class="block-string block" draggable="true" ondragstart="drag(event)" onclick="blockclick(event)" >
+
+	<div class="header header-string">
+		<div class="symbol-arg-start-string">"</div>
+		<div class="area-arg-string area varea forcetext"></div>
+		<div class="symbol-arg-end-string">"</div> 
+	</div>
+
+</div>
+
+<div id="block-if" class="block-if block block-with-parenthesis" draggable="true" ondragstart="drag(event)" onclick="blockclick(event)" >
+
+	<div class="header header-if">
+		<div class="name-if">if&nbsp;</div>
+		<div class="symbol-arg-start-if hidden">(</div>
+		<div class="area-arg-if area varea"></div>
+		<div class="symbol-arg-end-if hidden">)</div> 
+	</div>
+
+	<div class="symbol-area-start-if hidden">{</div>
+	<div class="area-if area"></div>
+	<div class="symbol-area-end-if hidden">}</div>
+
+	<div class="foldable foldable-else">else</div>
+	<div class="foldable-content content-else" draggable="true" ondragstart="drag(event)" onclick="blockclick(event)">
+		<div class="symbol-area-start-else hidden">{</div>
+		<div class="area-else area"></div>
+		<div class="symbol-area-end-else hidden">}</div>
+	</div>
+
+</div>
+
+
+<div id="block-comment" class="block-comment block" draggable="true" ondragstart="drag(event)" onclick="blockclick(event)">//<div class="area forcetext"></div></div>
+
+<div id="block-big-comment" class="block-big-comment block" draggable="true" ondragstart="drag(event)" onclick="blockclick(event)"><div class="area forcetext"></div></div>
+
+<!-- 
+
+int blit(area){
+	area
+}
+
+ -->
+<div id="block-function" class="block block-function" draggable="true" ondragstart="drag(event)" onclick="blockclick(event)">
+	<div class="header header-function">
+		<div class="type-function varea area"></div>
+		<div class="name-function varea area forcetext"></div>
+		<div class="symbol-arg-start-function">(</div>
+		<div class="area-arg-function varea area"></div>
+		<div class="symbol-arg-end-function">)</div>
+	</div>
+	<div class="symbol-area-start-function hidden">{</div>
+	<div class="foldable active expandbtn">expand</div>
+	<div class="foldable-content area-function area" style="display: block;"></div>
+	<div class="symbol-area-end-function hidden">}</div>
+</div>
+
+<div id="block-function-call" class="block block-function-call" draggable="true" ondragstart="drag(event)" onclick="blockclick(event)">
+	<div class="header header-function">
+		<div class="name-function-call varea area forcetext"></div>
+		<div class="symbol-arg-start-function">(</div>
+		<div class="area-arg-function-call varea area"></div>
+		<div class="symbol-arg-end-function">)</div>
+	</div>
+</div>
+
+
+<div id="block-while" class="block block-while" draggable="true" ondragstart="drag(event)" onclick="blockclick(event)">
+<div class="header header-while">
+		<div class="type-while type">while</div>
+		<div class="symbol-arg-start-while hidden">(</div>
+		<div class="area-arg-while area-arg area"></div>
+		<div class="symbol-arg-end-while hidden">)</div>
+	</div>
+	<div class="symbol-area-start-while hidden">{</div>
+	<div class="area-while area-content area"></div>
+	<div class="symbol-area-end-while hidden">}</div>
+</div>
+
+<div id="block-do" class="block block-do" draggable="true" ondragstart="drag(event)" onclick="blockclick(event)">
+<div class="header header-do">
+		<div class="type-do type">do</div>
+	</div>
+	<div class="symbol-area-start-do hidden">{</div>
+	<div class="area-do area-content area"></div>
+	<div class="symbol-area-end-do hidden">}</div>
+	<div class="header header-do">
+		<div class="type-do-while type">while</div>
+		<div class="symbol-arg-start-do-while hidden">(</div>
+		<div class="area-arg-do-while area-arg area"></div>
+		<div class="symbol-arg-end-do-while hidden">)</div>
+	</div>
+</div>
+
+
+<div id="block-for" class="block block-for block-with-parenthesis" draggable="true" ondragstart="drag(event)" onclick="blockclick(event)">
+<div class="header header-for">
+		<div class="type-for type">for</div>
+		<div class="symbol-arg-start-for hidden">(</div>
+		<div class="area-arg-for-1 varea area"></div>
+		<div class="symbol-arg-for-semicolon1 hidden">;</div>
+		<div class="area-arg-for-2 varea area"></div>
+		<div class="symbol-arg-for-semicolon2 hidden">;</div>
+		<div class="area-arg-for-3 varea area"></div>
+		<div class="symbol-arg-end-for hidden">)</div>
+	</div>
+	<div class="symbol-area-start-for hidden">{</div>
+	<div class="area-for area-content area"></div>
+	<div class="symbol-area-end-for hidden">}</div>
+</div>
+
+
+<div id="block-equal" class="block block-equal" draggable="true" ondragstart="drag(event)" onclick="blockclick(event)">
+<div class="header header-equal">
+		<div class="area-arg-equal-1 varea area"></div>
+		<div class="symbol-arg-equal">=</div>
+		<div class="area-arg-equal-2 varea area"></div>
+	</div>
+</div>
+
+<div id="block-greaterthan" class="block block-greaterthan" draggable="true" ondragstart="drag(event)" onclick="blockclick(event)">
+<div class="header header-greaterthan">
+		<div class="area-arg-greaterthan-1 area"></div>
+		<div class="symbol-arg-greaterthan">></div>
+		<div class="area-arg-greaterthan-2 area"></div>
+	</div>
+</div>
+
+<div id="block-lessthan" class="block block-lessthan" draggable="true" ondragstart="drag(event)" onclick="blockclick(event)">
+<div class="header header-lessthan">
+		<div class="area-arg-lessthan-1 area"></div>
+		<div class="symbol-arg-lessthan"><</div>
+		<div class="area-arg-lessthan-2 area"></div>
+	</div>
+</div>
+
+
+<div id="block-equalequal" class="block block-equalequal" draggable="true" ondragstart="drag(event)" onclick="blockclick(event)">
+<div class="header header-equalequal">
+		<div class="area-arg-equalequal-1 varea area"></div>
+		<div class="symbol-arg-equalequal">==</div>
+		<div class="area-arg-equalequal-2 varea area"></div>
+	</div>
+</div>
+
+<div id="block-include" class="block block-include" draggable="true" ondragstart="drag(event)" onclick="blockclick(event)">
+	<div class="header header-include">
+		<div class="type-include type">#include</div>
+		<div class="area-arg area-arg-include area forcetext"></div>
+	</div>
+</div>
+
+<!-- compiler preprocessor directives -->
+<div id="block-hashstart" class="block block-hashstart" draggable="true" ondragstart="drag(event)" onclick="blockclick(event)">
+	<div class="header header-hashstart">
+		<div class="type-hashstart type">#</div>
+		<div class="area-arg area-arg-hashstart area forcetext"></div>
+	</div>
+</div>
+
+
+<!-- goto label -->
+<div id="block-goto-label" class="block block-goto-label" draggable="true" ondragstart="drag(event)" onclick="blockclick(event)">
+	<div class="header header-goto-label">
+		<div class="area-arg area-arg-goto-label area forcetext"></div>
+		<div class="type-goto-label type">:</div>
+	</div>
+</div>
+
+<div id="block-struct" class="block block-struct" draggable="true" ondragstart="drag(event)" onclick="blockclick(event)">
+<div class="header header-struct">
+		<div class="type-struct type">struct</div>
+		<div class="area-arg-1 area-arg-struct-1 area varea forcetext"></div>
+		<div class="area-arg-2 area-arg-struct-2 area varea forcetext"></div>
+	</div>
+</div>
+
+<div id="block-struct-def" class="block block-struct-def" draggable="true" ondragstart="drag(event)" onclick="blockclick(event)">
+<div class="header header-struct-def">
+		<div class="type-struct-def type">struct</div>
+		<div class="area-arg-1 area-arg-struct-def-1 area varea forcetext"></div>
+	</div>
+
+	<div class="symbol-area-start-struct-def hidden">{</div>
+	<div class="area-struct-def area"></div>
+	<div class="symbol-area-end--struct-def hidden">}</div>
+</div>
+
+<div id="block-switch" class="block block-switch" draggable="true" ondragstart="drag(event)" onclick="blockclick(event)">
+<div class="header header-switch-def">
+		<div class="type-switch-def type">switch</div>
+		<div class="area-arg-1 area-arg-switch-def-1 area varea"></div>
+	</div>
+
+	<div class="symbol-area-start-switch-def hidden">{</div>
+	<div class="area-switch-def area"></div>
+	<div class="symbol-area-end--switch-def hidden">}</div>
+</div>
+
+<div id="block-datatype" class="block block-datatype" draggable="true" ondragstart="drag(event)" onclick="blockclick(event)">datatype</div>
+
+
+<div id="block-invarea" class="block block-invarea" draggable="true" ondragstart="drag(event)" onclick="blockclick(event)">
+<div class="header header-invarea">
+		<div class="type-invarea type"></div>
+		<div class="area-arg area-arg-invarea area varea"></div>
+	</div>
+</div>
+
+<div id="block-sizeof" class="block block-sizeof" draggable="true" ondragstart="drag(event)" onclick="blockclick(event)">
+<div class="header header-sizeof">
+		<div class="type-sizeof type">sizeof</div>
+		<div class="area-arg area-arg-sizeof area"></div>
+	</div>
+</div>
+
+
+
+<div id="block-varea" class="block-varea block varea area" draggable="true" ondragstart="drag(event)" onclick="blockclick(event)"><div class="varea area"></div></div>
+
+
+
+<!-- 
+
+sizeof()
+
+
+case
+default
+do
+enum
+extern
+goto
+inline
+restrict
+register
+
+
+TODO Seperating the similar blocks 
+auto|const|
+static|volatile|
+signed|unsigned|
+double|long|short|
+int|char|void|float|
+
+{} is used for multiline otherwise 
+
+if () return 0 ;
+
+also works till ;
+
+continue|break|
+	result = curcode.match(/((if|else|while|for|case|switch|default|do|enum|typedef|extern|goto|inline|register|restrict|return|sizeof|struct|union|while|_Bool|_Complex|_Imaginary -->
+
+<div id="block-break" class="block block-break" draggable="true" ondragstart="drag(event)" onclick="blockclick(event)">break;</div>
+
+<div id="block-continue" class="block block-continue" draggable="true" ondragstart="drag(event)" onclick="blockclick(event)">continue;</div>
+
+<div id="block-folder" class="block block-folder" draggable="true" ondragstart="drag(event)" onclick="blockclick(event)">
+	<div class="header header-folder">
+		<div class="symbol-arg-start-folder hidden">//</div>
+		<div class="area-arg-folder area forcetext"></div>
+		<div class="symbol-arg-end-folder hidden">)</div>
+	</div>
+
+	<div class="foldable foldable-folder">+</div>
+	<div class="foldable-content content-folder" draggable="true" ondragstart="drag(event)" onclick="blockclick(event)">
+		<div class="symbol-area-start-folder hidden">{</div>
+		<div class="area-folder area"></div>
+		<div class="symbol-area-end-folder hidden">}</div>
+	</div>
+
+</div>
+
+
+
+</div> <!-- templates end -->
+
+<textarea id="code" contenteditable=true style="width: 100%;" onkeyup="codekeyupauto(event)" oninput='this.style.height = "";this.style.height = this.scrollHeight + "px"'></textarea>
+
+<div class="toolbar">
+<button onclick="codekeyup(event);$('html, body').animate({scrollTop: $('#rebuiltarea').offset().top - 50 }, 500);">Make</button>
+<input id="pginput" type="integer" style="width: 50px">
+<span id="pgmax"></span>
+<button onclick="pg=pginput.value;showblocks(pg);">go</button>
+
+<button onclick="pg+=1;pginput.value=pg;showblocks(pg);">next</button>
+
+<button onclick="area.innerHTML = rebuiltarea.innerHTML; rebuiltarea.innerHTML = ''; $('html, body').animate({scrollTop: 0 }, 500);removetooltips();">use</button>
+
+<span id="progressbar-body"><div id="progressbar-bar"></div></span>
+</div>
+
+
+
+<div id="rebuiltarea" class="area minimize" ondrop="drop(event)" ondragover="allowDrop(event)"
+></div>
+
+<!-- 
+<div id="rebuiltarea" class="area minimize" ondrop="drop(event)" ondragover="allowDrop(event)"
+style="
+/*    position: absolute;
+    top: 45px;
+    right: 0;
+    width: 20%;
+    background: black;*/
+" onmouseover='style.opacity="0"' onmouseout='style.opacity="1"' 
+
+></div> -->
+
+
+
+<div id="parser"></div>
+
+<input id="input"  onblur="outclick(event)" onkeyup="inputkeyup(event)" onkeydown="inputkeydown(event)">
+
+<script type="text/javascript" src="jquery-3.5.0.min.js"></script>
+<script type="text/javascript">
+area = document.getElementById("area");
+// block = document.getElementById("block")
+input = document.getElementById("input")
+templates = document.getElementById("templates")
+code = document.getElementById("code");
+parser = document.getElementById("parser");
+rebuiltarea = document.getElementById("rebuiltarea");
+progressbar = document.getElementById("progressbar-bar");
+
+pginput = document.getElementById("pginput");
+pginput.value = 0
+pg=0
+
+code.style.height = "";
+code.style.height = code.scrollHeight + "px"
+
+thisblock = ""
+
+tooltip  = null
+
+input.value = ""
+coloring = true;
+
+directblock = 0
+directblockin = 0
+directtext = 0
+// area.appendChild(block);
+
+fnames = {}
+fcolors = {}
+
+function codekeyupauto(event){
+	if (code.textLength  < 1000){
+		codetoblocks();
+	}
+}
+
+function codekeyup(event){
+	codetoblocks();
+}
+
+function codetoblocks(){
+	parser.textContent = ""
+	rebuiltarea.textContent = ""
+
+	curcode = code.value
+	var patt2 = new RegExp("<div>","g");
+	var patt3= new RegExp("</div>","g");
+	var patt4= new RegExp("<br>","g");
+	curcode=curcode.replace(patt2,"\n").replace(patt3,"\n").replace(patt4,"\n");
+
+	blockfrom(curcode,0,0,0,rebuiltarea)
+}
+
+
+function newblock(data){
+	
+	  newdata = document.getElementById(data).cloneNode(true)
+	  blockid = blockid + 1;
+	  newdata.id = "block"+blockid;
+	  newdata.textContent = " "
+	  newdata.childNodes.item(0).data = "";
+	  if(coloring){
+	  	color = random_bg_color(newdata.classList)
+	  	if(newdata.style.background == ""){
+		  	if(color){
+			    newdata.style.background=color;
+		  	}
+	  	}
+	  }
+
+	  newdata.innerHTML = document.getElementById(data).innerHTML;
+	  newdata.childNodes.forEach(deep)
+
+	  return newdata;
+}
+
+datatypes = `auto|const|static|volatile|signed|unsigned|double|long|short|int|char|void|float`.split("|")
+
+function removetooltips(){
+	tooltips = area.getElementsByClassName('tooltip')
+	while (tooltips.length > 0) tooltips[0].remove();
+}
+
+
+function removeinputs(){
+	tooltips = area.getElementsByClassName('block-input')
+	while (tooltips.length > 0) tooltips[0].remove();
+}
+
+function areaclass(curclass){
+	elements=curblock.getElementsByClassName(curclass)
+	return elements[elements.length-1] 
+}
+
+function areaclassinblock(curblock,curclass){
+	elements=curblock.getElementsByClassName(curclass)
+	return elements[elements.length-1] 
+}
+
+function gotoparentblock(){
+	curarea = curblock.parentNode
+	curblock = curarea.closest(".block")
+}
+
+
+function blockfrom(curcode,dblock,dblockin,dtext,output){
+	if(!curcode){
+		return
+	}
+	directblock = dblock
+	directblockin = dblockin
+	directtext = dtext
+	selectedoutput = output
+	// if(curcode){
+	curcode = curcode.replace(/&lt;/g,'<')
+
+	curcode = curcode.replace(/&gt;/g,'>')
+
+	curcode = curcode.replace(/(\t)/g,'')
+
+	curcode = curcode.replace(/\}\s*else\s*\{/g, "}else{") //removing whites-space
+
+
+	curcode = curcode.replace(/\}\s*while\s*\(/g, "}while(") //do-while //removing whites-space
+
+// (\s*(if)\s*\()
+// this solves words like ifa ifr and becoming if block 
+	curcode = curcode.replace(/\s+(if)\s*\(/g, "\nif(") //removing whites-space
+	curcode = curcode.replace(/\s+(while)\s*\(/g, "\nwhile(") //removing whites-space
+	curcode = curcode.replace(/\s+(for)\s*\(/g, "\nfor(") //removing whites-space
+	curcode = curcode.replace(/\s+(switch)\s*\(/g, "\nswitch(") //removing whites-space
+// + is used for minimum 1 and star for minimum 0
+	// curcode = curcode.replace(/\s+(void|static|auto|int|char|double|float|long|short|signed|unsigned)\s+/g, function (x) {
+ //  		return x.replace(/\s+/g," ");
+	// }); 
+		// console.log(curcode)
+	// reference help https://regexr.com/
+
+
+// also possible \b(?:(if))\b
+
+	// result = curcode.match(/(?:"(?:[^\\"]+|\\[^"]|\\")*")/g) to match string	
+
+
+	result = curcode.match(/((\b(?:(if|while|for|switch))\s*\(|\w+\(|\b(?:(void|static|auto|int|char|double|float|long|short|signed|unsigned))\b|(?:"(?:[^\\"]+|\\[^"]|\\")*")|struct|const|break|case\:|continue|default\:|do|enum|extern|goto|inline|register|restrict|return|sizeof|typedef|union|volatile|_Bool|_Complex|_Imaginary|#include|==|\w+\:|\/\*|\*\/|\/\/|\n|\(|\;|\)|\{|\}else\{|\}))|#(.*)|((\w+)|(\W))/g)
+
+	// result = curcode.match(/((\b(?:(if|while|for|switch))\s*\(|\w+\(|\b(?:(void|static|auto|int|char|double|float|long|short|signed|unsigned))\b|\"(.*)\"|/(?:"(?:[^\\"]+|\\[^"]|\\")*")/|struct|const|break|case\:|continue|default\:|do|enum|extern|goto|inline|register|restrict|return|sizeof|typedef|union|volatile|_Bool|_Complex|_Imaginary|#include|==|\w+\:|\/\*|\*\/|\/\/|\n|\(|\;|\)|\{|\}else\{|\}\s*while\s*\(|\}))|#(.*)|((\w+)|(\W))/g)	
+
+
+
+	// result = curcode.match(/((if|while|for|auto|break|case|char|const|continue|default|do|double|else|enum|extern|float|for|goto|if|inline|int|long|register|restrict|return|short|signed|sizeof|static|struct|switch|typedef|union|unsigned|void|volatile|while|_Bool|_Complex|_Imaginary|#include|\/\*|\*\/|\/\/|\n|\(|\;|\)|\{|\}else\{|\}))|#(.*)|((\w+)|(\W))/g)	
+
+	console.log(result)
+	curarea = selectedoutput
+	curblock = null
+	curclass = "area"
+
+	functioncallmaybefunction = false
+
+	totalcur = result.length
+	document.getElementById('pgmax').textContent = Math.floor(totalcur /1000)
+	lineno = 0
+	curtooltipblock = ""
+	thisblock = ""
+	curtooltip = null
+	showblocks(0) 
+	// if (result.length >= 2){
+	// 	parser.textContent += "block-if:\n"
+	// 	ifarg = result[1].split("){")
+	// 	parser.textContent += "if-arg:" + ifarg[0] +"\n"
+	// 	ifarea = ifarg[1].split("}")
+	// 	parser.textContent += "if-area" 
+	// 	blockfrom(ifarea[0])
+	// 	// blockfrom(ifarea[1])
+	// }else{
+	// 	if (result != ""){
+	// 		parser.textContent += "contains:" + result
+	// 	}
+	// }
+
+	// }
+}
+
+function showblocks(pg){
+	result.slice(0+1000*pg,1000+1000*pg).forEach(function(cur, curno){
+		
+		if (cur === "\n"){
+			lineno += 1
+			if(curblock){
+			  	tooltip = document.createElement("span")
+		 		tooltip.classList.add("tooltip")
+				tooltip.innerHTML = lineno + ": " + (curcode.split("\n"))[lineno-1]
+		  		curblock.appendChild(tooltip)
+			}
+		}
+  
+
+		requestAnimationFrame(function(){
+			progressbar.style.width = Math.floor(((curno+1+(1000*pg)) / totalcur) * 100) + "%"
+		})
+
+		// cur = cur.replace(/(^|\s)(if|while|for)\s*\(/g, function(x) {
+		// 	return x.replace(/(^|\s)/g, "\n").replace(/\s*\(/g, "(")
+		// }) //removing whites-space
+
+		console.log(cur)
+		ifclass(curblock,"block-big-comment",function(){
+			if(cur === "*/"){
+
+				parser.textContent += "working comment close:" + "\n"
+
+				gotoparentblock()
+			}else	if(cur!=""){
+				parser.textContent += "content:" + cur + "\n"
+				if(curblock){
+
+				if(curclass){
+					curcontent = curblock.getElementsByClassName(curclass)
+					curcontent[0].textContent += cur
+
+				}else{
+					curarea += cur
+				}
+
+				}
+			
+			}
+
+			cur = ""
+		})		
+
+
+		ifclass(curblock,"block-comment",function(){
+			if(cur === "\n"){
+
+				parser.textContent += "working comment close:" + "\n"
+				gotoparentblock()
+
+			}else	if(cur!=""){
+				parser.textContent += "content:" + cur + "\n"
+				if(curblock){
+
+				if(curclass){
+					curcontent = curblock.getElementsByClassName(curclass)
+					curcontent[0].textContent += cur
+
+				}else{
+					curarea += cur
+				}
+
+				}
+			
+			}
+
+			cur = ""
+		})		
+
+		ifclass(curblock,"block-include",function(){
+			if(cur === "\n"){
+
+				parser.textContent += "comment close:" + "\n"
+				gotoparentblock()
+
+			}else	if(cur!=""){
+				parser.textContent += "content:" + cur + "\n"
+				if(curblock){
+
+				if(curclass){
+					curcontent = curblock.getElementsByClassName(curclass)
+					curcontent[0].textContent += cur
+
+				}else{
+					curarea += cur
+				}
+
+				}
+			
+			}
+
+			cur = ""
+		})		
+
+
+
+		if(cur === "if("){
+
+				parser.textContent += "if args:" + "\n"
+				
+				curblock = newblock("block-if")
+				curarea.appendChild(curblock)
+
+				curclass = "area-arg-if"
+				curarea = areaclass(curclass)
+
+				thereisparenthesis = false// default
+
+		}else if(cur=== "/*"){
+
+			parser.textContent += "comment:" + "\n"
+			
+			curblock = newblock("block-big-comment")
+			curarea.appendChild(curblock)
+
+			curclass = "area"
+			curarea = areaclass(curclass)
+
+		}else if(cur === "*/"){
+
+			parser.textContent += "comment close:" + "\n"
+
+			if(curblock){
+				ifclass(curblock,"block-big-comment",function(){
+					parser.textContent += "working comment close:" + "\n"
+					gotoparentblock()
+				})
+			}
+
+		}else if(cur === "//"){
+
+			parser.textContent += "comment:" + "\n"
+			
+			curblock = newblock("block-comment")
+			curarea.appendChild(curblock)
+
+			curclass = "area"
+			curarea = areaclass(curclass)
+
+		}else if(cur === "\n"){
+			parser.textContent += "newline" + "\n"
+
+			if(curblock){
+				ifclass(curblock,"block-comment",function(){
+					parser.textContent += "working comment close:" + "\n"
+
+					gotoparentblock()
+
+				})
+				// ifclass(curblock,"block-area",function(){
+				// 	parser.textContent += "working comment close:" + "\n"
+				// 	curarea = curblock.parentNode //because parent of a block is always its area
+				// 	curblock = curarea.closest(".block") //searches closest ancestor block
+				// })
+			}
+
+			// curblock = newblock("block-varea")
+			// curclass = "area"
+			// curarea = areaclass(curclass)
+
+			// parser.textContent += "content:" + cur + "\n"
+			// if(curblock){
+
+			// if(curclass){
+			// 	curcontent = curblock.getElementsByClassName(curclass)
+			// 	curcontent[0].textContent += "\n"
+
+			// }else{
+			// 	curarea += "<br>"
+			// }
+
+			// }
+
+			// parser.textContent += "comment:" + "\n"
+			// ifnotclass(curblock,"block-area",function(){
+
+				// curclass = "area"
+				// elements=curblock.getElementsByClassName(curclass)
+				// curarea = elements[elements.length-1] 
+			// })
+
+
+				
+		}else if(cur === "#include"){
+			parser.textContent += "include args:" + "\n"
+			
+			curblock = newblock("block-include")
+			curarea.appendChild(curblock)
+
+			curclass = "area-arg"
+			curarea = areaclass(curclass)
+		}else if(cur.startsWith("#")){
+			parser.textContent += "include args:" + "\n"
+			
+			curblockx = newblock("block-hashstart")
+			curarea.appendChild(curblockx)
+
+			curclassx = "area-arg"
+			curareax = areaclassinblock(curblockx,curclassx)
+
+			curareax.textContent = cur.slice(1)
+
+		}else if(cur === "do"){
+			parser.textContent += "do args:" + "\n"
+			
+			curblock = newblock("block-do")
+			curarea.appendChild(curblock)
+
+			curclass = "area-do"
+			curarea = areaclass(curclass)
+
+
+		}else if(cur === "while("){
+			ifnotclass(curblock,"block-do",function(){
+
+			parser.textContent += "while args:" + "\n"
+			
+			curblock = newblock("block-while")
+			curarea.appendChild(curblock)
+
+			curclass = "area-arg"
+			curarea = areaclass(curclass)
+
+			})
+
+		// }else if(cur === "}while("){
+
+		// 	ifnotclass(curblock,"block-do",function(){
+
+		// 	parser.textContent += "while args:" + "\n"
+			
+		// 	curblock = newblock("block-while")
+		// 	curarea.appendChild(curblock)
+
+		// 	curclass = "area-arg"
+		// 	curarea = areaclass(curclass)
+
+		// 	})
+
+			ifclass(curblock,"block-do",function(){
+
+			parser.textContent += "dowhile args:" + "\n"
+			
+			// curblock = newblock("block-while")
+			// curarea.appendChild(curblock)
+
+			curclass = "area-arg" //area-arg-do-while
+			curarea = areaclass(curclass)
+
+			})
+
+		}else if(cur === "for("){
+			parser.textContent += "for args:" + "\n"
+			
+			curblock = newblock("block-for")
+			curarea.appendChild(curblock)
+
+			curclass = "area-arg-for-1"
+			curarea = areaclass(curclass)
+			forargs=1;     
+			
+			thereisparenthesis = false// default
+
+		// }else if(cur === ","){
+
+		// }else if(cur === "+"){
+
+		}else if(cur === "switch("){
+			parser.textContent += "switch args:" + "\n"
+			
+			curblock = newblock("block-switch")
+			curarea.appendChild(curblock)
+
+			curclass = "area-arg-switch-def-1"
+			curarea = areaclass(curclass)
+
+
+		}else if(cur === "="){
+
+				parser.textContent += "equal" 				
+
+				//it is replacing the parent block maybe it is if
+
+				b=curblock
+				ca=curarea
+				lastitem = curarea.lastChild
+
+			// ifclass(curblock, "block-varea",function(){
+			// 	gotoparentblock()
+			// })
+				curblock = newblock("block-equal")
+				curarea.appendChild(curblock)
+
+				curclass = "area-arg-equal-1"
+				curarea = areaclass(curclass)
+
+			// ifclass(b, "block-varea",function(){
+			// 	curarea.innerHTML = ca.innerHTML
+			// 	b.remove();
+			// })
+
+			// ifnotclass(b, "block-varea",function(){
+				curarea.appendChild(lastitem);
+			// })
+			
+				curclass = "area-arg-equal-2"
+				curarea = areaclass(curclass)
+	
+
+		}else if(cur === "("){
+
+			// parser.textContent += "we are in CCCCCCCCCCCC" + curblock.classList
+			
+			// see if name of previous item is not attached
+
+
+			// ifclass(curblock,"block-invarea",function(){
+			// 	gotoparentblock()
+			// })
+
+			// // ex. code
+			// // a = ((int)serv_group >= 0) ? serv_group : DRM_DEV_GID;
+			// if(!itmaybefunction){
+
+			itsblockbracket = false
+			ifclass(curblock,"block-equal",function(){
+				itsblockbracket = true
+			})
+
+			ifclass(curblock,"block-bracket",function(){
+				itsblockbracket = true
+			})
+
+			ifclass(curblock,"block-invarea",function(){
+				itsblockbracket = true
+			})
+
+			ifclass(curblock,"block-varea",function(){
+				itsblockbracket = true
+			})
+
+			// ifclass(curblock,"block-do",function(){
+			// 	itsblockbracket = true
+			// })
+
+			if(itsblockbracket){
+
+				parser.textContent += "the bracket block args:" + "\n"
+				
+				curblock = newblock("block-bracket")
+				curarea.appendChild(curblock)
+
+				curclass = "area-arg-bracket"
+				curarea = areaclass(curclass)
+
+			}
+
+			// }else{}
+			// // })
+		}else if(cur.endsWith("(")){
+		
+			console.log("xyz(")
+
+			ifclass(curblock,"block-invarea",function(){
+				gotoparentblock()
+			})
+
+			parser.textContent += "itsfunctioncall"
+
+			curblock = newblock("block-function-call")
+
+			curarea.appendChild(curblock); 
+
+			curarea = areaclass("name-function-call")	
+			// curarea.textContent = cur.slice(0, -1);
+			fname = cur.slice(0, -1)
+			curarea.textContent = fname;
+
+			if(fnames[fname]){
+				curblock.style.background=fnames[fname]
+			}else{
+				fnames[fname] = random_bg_color(curblock.classList)
+				curblock.style.background=fnames[fname]
+				templates.appendChild(newblock(curblock.id))
+			}
+
+				
+			curclass = "area-arg-function-call"
+			curarea = areaclass(curclass)
+
+			functioncallmaybefunction = true;
+
+		}else if(cur.endsWith(":")){
+			parser.textContent += "endswith label : " + cur
+			parser.textContent += "label args : " + "\n"
+			
+			curblockx = newblock("block-goto-label")
+			curarea.appendChild(curblockx)
+
+			curclassx = "area-arg"
+			curareax = areaclassinblock(curblockx,curclassx)
+
+			curareax.textContent = cur.slice(0,-1)
+
+
+		}else if(cur === ";"){
+			// parser.textContent += "\n;" + curblock.classList
+			
+			donthavebracket = ["block-equal","block-invarea","block-varea","block-struct"]
+			//left open to close on hit
+			stillinside =true
+			while(stillinside){
+			//at every level
+			// parser.textContent += "\n;" + curblock.classList + curclass
+
+				donthave = 0
+				donthavebracket.forEach(function(itscurclass){
+					ifclass(curblock,itscurclass,function(){
+						donthave += 1
+					})
+				})
+
+				if(donthave){
+					gotoparentblock()
+				}else{
+					stillinside = false; // and continue to next char
+				}
+
+			}
+
+			ifclass(curblock,"block-for",function(){
+			parser.textContent += "for args:" + "\n" +curclass
+			if(forargs==1){
+				curclass = "area-arg-for-2"
+			forargs+=1
+			curarea = areaclass(curclass)
+			}else if(forargs==2){
+				curclass = "area-arg-for-3"
+			forargs+=1
+			curarea = areaclass(curclass)
+			}
+
+			})
+
+			if(!curclass.includes("area-arg-for")){
+				ifclass(curblock,"block-with-parenthesis",function(){
+					if(!thereisparenthesis){
+						gotoparentblock()
+						ifclass(curblock,"block-with-parenthesis",function(){
+							thereisparenthesis = true;
+						})
+					}
+				})
+			}
+
+			// if(curclass.includes("area-arg-for")){
+			// 	gotoparentblock()
+			// }
+		}else if(cur === ")"){
+
+			hasbracketinmiddle = ["block-if","block-for","block-function","block-while","block-switch"]
+
+			hasbracketatlast = ["block-bracket","block-do","block-function-call"]
+
+			donthavebracket = ["block-equal","block-invarea","block-varea","block-struct"]
+			//left open to close on hit
+			
+			setmiddlearea = false;
+			stillinside = true
+
+			while(stillinside){
+			//at every level
+
+				haveatlast = 0
+				hasbracketatlast.forEach(function(itscurclass){
+					ifclass(curblock,itscurclass,function(){
+						haveatlast += 1
+					})
+				})
+			
+				haveinmiddle = 0
+				hasbracketinmiddle.forEach(function(itscurclass){
+					ifclass(curblock,itscurclass,function(){
+						haveinmiddle += 1
+					})
+				})
+
+				donthave = 0
+				donthavebracket.forEach(function(itscurclass){
+					ifclass(curblock,itscurclass,function(){
+						donthave += 1
+					})
+				})
+
+				if(donthave){
+					gotoparentblock()
+				}else	if(haveinmiddle){	// setmiddlearea stay in same block  
+					stillinside = false; // and continue to next char
+					setmiddlearea = true;
+
+				}else if(haveatlast){
+					gotoparentblock()
+					stillinside = false; // and continue to next char
+				}else{
+					stillinside = false; // and continue to next char
+				}
+
+			}
+
+					// gotoparentblock()
+
+// struct fd_ringbuffer *ring;
+// static void
+// emit_dst(struct fd_ringbuffer *ring, struct xmsm_bo *dst)
+// {
+// sdfsadfsdss
+
+			// itshungry
+			// itssatisfied
+			// itssitting
+			// itsgoingtoeat
+
+
+			if(setmiddlearea){
+	
+				parser.textContent += "bracket closed:" + curblock.classList + "\n"
+
+				ifclass(curblock,"block-if",function(){
+					parser.textContent += "if area:" + "\n"
+					curclass = "area-if"
+				})
+				
+				ifclass(curblock,"block-while",function(){
+					parser.textContent += "area-content area:" + "\n"
+					curclass = "area-content"
+				})
+
+				ifclass(curblock,"block-for",function(){
+					parser.textContent += "area-content area:" + "\n"
+					curclass = "area-content"
+				})
+
+				ifclass(curblock,"block-function",function(){
+					parser.textContent += "area-function area:" + "\n"
+					curclass = "area-function"
+				})
+
+				ifclass(curblock,"block-switch",function(){
+					parser.textContent += "area-switch area:" + "\n"
+					curclass = "area-switch-def"
+				})
+
+
+				if(curblock){
+					curarea = areaclass(curclass)
+					// console.log("working")
+					console.log(curclass)
+				// gotoparentblock()
+					parser.textContent += "bracket parent class:" + curblock.classList + "\n"
+
+				}
+			}
+
+
+
+			console.log(curarea)
+
+		}else if(cur === "{"){
+
+// solution to if without parenthesis
+    // if ((fd = open(buf, O_RDWR | O_CLOEXEC, 0)) >= 0)
+    //     return fd;
+
+			ifclass(curblock,"block-with-parenthesis",function(){ 
+				thereisparenthesis = true
+			})
+
+			ifclass(curarea.lastChild,"block-function-call",function(){ 
+			if(functioncallmaybefunction){
+				functioncallmaybefunction = false;
+				// its a function
+				// its a function
+				// now take current block and put it inside block function block
+				
+				parser.textContent += "its a function "
+				b=curblock
+				ca=curarea
+				lastitem = curarea.lastChild
+
+				gotoparentblock()
+
+				curblock = newblock("block-function")
+				curarea.appendChild(curblock)
+
+				curclass = "name-function"
+				curarea = areaclass(curclass)
+
+				// curarea.innerHTML = areaclassinblock(lastitem,"name-function-call").innerHTML
+			
+			fname = areaclassinblock(lastitem,"name-function-call").innerHTML
+			curarea.innerHTML = fname;
+
+			if(fnames[fname]){
+				curblock.style.background=fnames[fname]
+			}else{
+				fnames[fname] = random_bg_color(lastitem.classList)
+				curblock.style.background=fnames[fname]
+				templates.appendChild(newblock(lastitem.id))
+			}
+
+				curclass = "area-arg-function"
+				curarea = areaclass(curclass)
+
+				curarea.innerHTML = areaclassinblock(lastitem,"area-arg-function-call").innerHTML
+				
+
+				curclass = "type-function"
+				curarea = areaclass(curclass)
+
+				lastitem.remove()
+
+				ca.childNodes.forEach(function(x){
+					curarea.appendChild(x);
+				})
+
+				b.remove()
+
+				curclass = "area-function"
+				curarea = areaclass(curclass)
+								
+			}
+
+			})
+			ifclass(curblock,"block-function",function(){
+			parser.textContent += "IN THE FUNCTION AREA:"
+				curclass = "area-function"
+				curarea = areaclass(curclass)
+			})
+				
+
+			ifclass(curblock,"block-struct",function(){
+			parser.textContent += "IN THE struct def AREA:"
+
+			if(curclass == "area-arg-2"){
+				if(structspace == 2){
+
+				//create new block shift the old block's area to new and specify area for further adding
+				//curnew("block-struct-def", "area-struct-def")
+				//shiftarea()
+				b=curblock
+				// ca=curarea
+				ca=areaclass("area-arg-1")
+
+				gotoparentblock()
+
+				// setnewblock()
+				curblock = newblock("block-struct-def")
+				curarea.appendChild(curblock)
+
+				// setareaclass()
+				curclass = "area-arg-struct-def-1"
+				curarea = areaclass(curclass)
+
+				curarea.innerHTML = ca.innerHTML
+				b.remove();
+
+				// setareaclass()
+				curclass = "area-struct-def"
+				curarea = areaclass(curclass)
+
+
+				}
+			}
+
+			})
+
+			ifclass(curblock,"block-switch",function(){
+				parser.textContent += "IN THE switch AREA:"
+
+				curclass = "area-switch-def"
+				curarea = areaclass(curclass)
+
+			})
+
+
+			// ifclass(curblock,"block-function-call",function(){
+
+			// 					// its a function
+			// 	// now take current block and put it inside block function block
+			// 	b=curblock
+			// 	ca=curarea
+
+			// 	gotoparentblock()
+
+			// 	curblock = newblock("block-function")
+			// 	curarea.appendChild(curblock)
+
+			// 	curclass = "type-function"
+			// 	curarea = areaclass(curclass)
+			// 	curarea.innerHTML = areaclassinblock(ca2,"area").innerHTML
+
+			// 	curarea.innerHTML = "bvvareadddd"+ ca.innerHTML
+			// 	b.remove();
+
+			// 	ca2 = curarea
+
+			// 	curclass = "name-function"
+			// 	curarea = areaclass(curclass)
+
+			// 	curarea.innerHTML = areaclassinblock(ca2,"area").innerHTML
+				
+			// 	ca2.lastChild.remove()
+				
+			// 	curclass = "area-arg-function"
+			// 	curarea = areaclass(curclass)
+
+
+			// })
+
+
+		}else if(cur === "}else{"){
+			
+			ifclass(curblock,"block-equal",function(){
+				gotoparentblock()
+			})
+			ifclass(curblock,"block-invarea",function(){
+				gotoparentblock()
+			})
+
+			ifclass(curarea,"varea",function(){
+				gotoparentblock()
+			})
+
+			ifclass(curblock,"block-if",function(){
+
+				parser.textContent += "else area:" + "\n"
+				
+				curclass = "area-else"
+
+				curarea = areaclass(curclass)
+
+
+				areaclass("content-else").style.display = "block"
+
+				areaclass("foldable-else").classList.add("active")
+
+			})
+		
+		}else if(cur === "}"){
+
+			ifnotclass(curblock,"block-do",function(){
+
+			// curclass = ""
+			parser.textContent += "if close:" + "\n"
+			// curarea = curarea.closest("area") //Node here parent area 
+
+			// curarea = curarea.parentNode.closest(".area")
+			// curblock = curarea.closest(".block") //searches closest ancestor
+			if(curblock){
+
+				gotoparentblock()
+			}
+
+			})
+
+			 //because parent of a block is always its area
+
+			//if closest doesn't work in old browsers push and pop can be used 
+
+			// console.log(curarea);
+			// curblock = curblock.closest("block")
+		}else if(datatypes.includes(cur)){
+		
+			parser.textContent += cur +" args:" + "\n"
+			
+			ifnotclass(curarea, "varea",function(){
+
+				curblock = newblock("block-varea")
+				curarea.appendChild(curblock)
+				curclass = "varea"
+				curarea = areaclass(curclass)
+
+			})
+
+			curdatatype = newblock("block-datatype")
+			console.log(curdatatype)
+			curdatatype.textContent = cur
+
+			curarea.appendChild(curdatatype)
+
+
+					
+		// ifclass(curblock,"block-varea")
+		// 		parser.textContent += "block-struct start:" + "\n"
+		// 		structspace += 1
+		// 		if(structspace == 2){
+		// 			curarea = curblock.parentNode //because parent of a block is always its area
+		// 			curblock = curarea.closest(".block") //searches closest ancestor block	
+		// 		}
+		
+		}else if(cur.endsWith("\"") && cur.startsWith("\"")){
+
+			a=newblock("block-string")
+			b=areaclassinblock(a,"area-arg-string")
+			b.textContent = cur.slice(1,-1)
+			curarea.appendChild(a)
+
+		}else if(cur === "struct"){
+			parser.textContent += "struct args:" + "\n"
+			
+			curblock = newblock("block-struct")
+			curarea.appendChild(curblock)
+
+			curclass = "area-arg-1"
+			curarea = areaclass(curclass)
+
+			structspace = 0
+
+		}else if(cur === " "){
+
+			ifclass(curblock,"block-invarea",function(){
+				gotoparentblock()
+			})
+
+			// ifclass(curblock,"block-varea",function(){
+
+			// 	b=curblock
+			// 	ca=curarea
+
+			// 	gotoparentblock()
+
+			// 	curblock = newblock("block-invarea")
+			// 	curarea.appendChild(curblock)
+
+			// 	curclass = "varea"
+			// 	curarea = areaclass(curclass)
+
+			// 	curarea.innerHTML = ca.innerHTML
+			// 	b.remove();
+
+			// 	ca2 = curarea
+
+			// 	curclass = "area"
+			// 	curarea = areaclass(curclass)
+
+			// 	// c
+			// 	// curblock = newblock("block-invarea")
+			// 	// curarea.appendChild(curblock)
+
+			// 	// curclass = "varea"
+			// 	// curarea = areaclass(curclass)
+			// 	// curarea.textContent = cur
+
+			// 	// gotoparentblock()
+			// })
+			
+			
+			ifclass(curblock,"block-struct",function(){
+				// parser.textContent += "block-struct start:" + "\n"
+				if(structspace == 1){
+				
+					parser.textContent += "block-structarg2 stop:" + "\n"
+					curclass = "area-arg-2"
+					curarea = areaclass(curclass)
+
+				}else if(structspace == 2){
+
+					parser.textContent += "block-structout stop:" + "\n"
+							
+					gotoparentblock()
+					// curclass = curarea.classList[0]
+					// console.log("out" + curblock.classList)
+				}
+				structspace += 1
+
+
+			})
+
+			// ifclass(curblock,"block-struct",function(){
+			// 	// parser.textContent += "block-struct start:" + "\n"
+			// 	if(structspace >= 1){
+			// 		parser.textContent += "block-structout stop:" + "\n"
+						
+				
+			// 		curarea = curblock.parentNode //because parent of a block is always its area
+			// 		curblock = curarea.closest(".block") //searches closest ancestor block
+			// 		// curclass = curarea.classList[0]
+			// 		// console.log("out" + curblock.classList)
+			// 	}
+			// 	structspace = 1
+
+			// })
+
+		}else if(cur!=""){
+
+
+			parser.textContent += "content:" + cur + "\n"
+			// if(curblock){
+
+			// if(curclass){
+			// 	curcontent = curblock.getElementsByClassName(curclass)
+			// 	curcontent[0].textContent += cur
+
+
+			// }else{
+			// }
+
+			ifclass(curblock,"block-invarea",function(){
+				gotoparentblock()
+			})
+			
+
+			ifclass(curarea,"varea",function(){
+			if(!directtext){
+			
+			// if(!directblock){
+
+			if(!directblockin){
+							
+				curblock = newblock("block-invarea")
+				curarea.appendChild(curblock)
+
+				curclass = "varea"
+				curarea = areaclass(curclass)
+
+			}
+			// }
+			}
+
+			curarea.textContent = cur
+
+			})
+		
+			ifnotclass(curarea,"varea",function(){
+			
+			if(!directtext){
+			if(!directblock){
+			if(!directblockin){
+				
+				curblock = newblock("block-varea")
+				curarea.appendChild(curblock)
+
+				curclass = "varea"
+				curarea = areaclass(curclass)
+			
+
+				curblock = newblock("block-invarea")
+				curarea.appendChild(curblock)
+
+				curclass = "varea"
+				curarea = areaclass(curclass)
+			}
+			}
+			}
+				curarea.textContent = cur
+
+				// curarea.innerHTML += cur
+			})
+
+			// }
+		}else {
+			parser.textContent += "contenta:" + cur + "\n"
+		}
+
+
+ 	})
+}
+
+
+
+
+function generatecode(){
+	// for (var i = area.childNodes.length - 1; i >= 0; i--) {
+	// 	area.childNodes[i]
+	// }
+	code.value = ""
+	tabs = -1;
+
+	// generatefrom(area)
+	generatefromeasy(area,false)
+	codetoblocks();
+}
+
+//generate from easy start //
+
+function indentstart(){
+	tabs = tabs+1
+	tab = "	".repeat(tabs)
+}
+
+function indentend(){
+	tabs = tabs-1
+	if (tabs >= 0){
+		tab = "	".repeat(tabs)
+	}
+}
+
+function foreachchild(curarea,curfunction){
+	curarea.childNodes.forEach(curfunction)
+}
+
+function ifclass(cur,classname,curfunction){
+	if(cur!=null){
+
+		if (cur.classList){
+			if (cur.classList.contains(classname)) {
+				curfunction();
+			}
+		}
+
+	}
+}
+
+
+function ifnotclass(cur,classname,curfunction){
+	if(cur!=null){
+
+		if (cur.classList){
+			if (cur.classList.contains(classname)) {
+			
+			}else{
+				curfunction();
+			}
+		}else{
+			curfunction();
+		}
+
+	}else{
+		curfunction()
+	}
+}
+
+
+function iftext(cur,curfunction){
+	if (!cur.classList){
+		curfunction()
+	}
+}
+
+smallarea = false //helps in newlines and indent
+function generatefromeasy(curarea,smallarea){
+	indentstart()
+	cursmallarea = smallarea
+	foreachchild(curarea,function(cur){
+		ifclass(cur,"block",function(){
+
+		ifclass(cur,"block-area",function(){
+			foreachchild(cur,function(areacur){
+				ifclass(areacur,"area",function(){
+					generatefromeasy(areacur,false)
+				})
+			})
+		})
+
+		ifclass(cur,"block-bracket",function(){
+			code.value += "("
+			foreachchild(cur,function(bracketcur){
+				ifclass(bracketcur,"header",function(){
+					foreachchild(bracketcur,function(headercur){
+						ifclass(headercur,"area",function(){
+							generatefromeasy(headercur,true)
+						})
+					})
+				})
+			})
+			code.value += ")"
+		})
+
+		ifclass(cur,"block-string",function(){
+			code.value += "\""
+			foreachchild(cur,function(blockcur){
+				ifclass(blockcur,"header",function(){
+					foreachchild(blockcur,function(headercur){
+						ifclass(headercur,"area",function(){
+							code.value += headercur.textContent
+						})
+					})
+				})
+			})
+			code.value += "\""
+		})
+		ifclass(cur,"block-if",function(){
+			code.value += tab + "if"
+			foreachchild(cur,function(ifcur){
+				ifclass(ifcur,"header-if",function(){
+					foreachchild(ifcur,function(headerifcur){
+						ifclass(headerifcur,"area-arg-if",function(){
+							// code.value += "(" + headerifcur.textContent + ")"
+								code.value += "("
+								// smallarea = true
+								generatefromeasy(headerifcur,true)
+								code.value += ")"
+						})
+					})
+				})
+				ifclass(ifcur,"area-if",function(){
+					code.value += "{\n"
+					// smallarea = false
+					generatefromeasy(ifcur,false)
+				})
+				ifclass(ifcur,"content-else",function(){
+					if(ifcur.style.display === "block"){
+						foreachchild(ifcur,function(contentelsecur){
+							ifclass(contentelsecur,"area-else",function(){
+								code.value += tab + "}else{\n"
+								// smallarea = false
+								generatefromeasy(contentelsecur,false)
+								code.value += tab + "}\n"
+							})
+						})
+					}else{
+						code.value += tab + "}\n"
+					}
+				})
+			})
+		})
+
+		ifclass(cur,"block-comment",function(){
+			code.value += "//"
+			foreachchild(cur,function(blockcur){
+				ifclass(blockcur,"area",function(){
+					code.value += blockcur.textContent
+				})
+			})
+			code.value += "\n"
+		})
+
+
+		ifclass(cur,"block-big-comment",function(){
+			code.value += "/*"
+			foreachchild(cur,function(blockcur){
+				ifclass(blockcur,"area",function(){
+					code.value += blockcur.textContent
+				})
+			})
+			code.value += "*/"
+		})
+
+
+		ifclass(cur,"block-function",function(){
+			// code.value += "/*"
+			foreachchild(cur,function(blockcur){
+				ifclass(blockcur,"header",function(){
+					foreachchild(blockcur,function(headercur){
+						ifclass(headercur,"type-function",function(){
+							generatefromeasy(headercur,true)
+							code.value += " "
+						})
+						ifclass(headercur,"name-function",function(){
+							generatefromeasy(headercur,true)
+						})
+						ifclass(headercur,"area-arg-function",function(){
+							code.value += "("
+							generatefromeasy(headercur,true)
+							code.value += ")"
+						})
+					})
+				})
+				ifclass(blockcur,"area",function(){
+					code.value += "{\n"
+					generatefromeasy(blockcur,false)
+					code.value += tab + "}\n"
+				})
+
+			})
+			// code.value += "*/"
+		})
+
+		ifclass(cur,"block-function-call",function(){
+			// code.value += "/*"
+			foreachchild(cur,function(blockcur){
+				ifclass(blockcur,"header",function(){
+					foreachchild(blockcur,function(headercur){
+						ifclass(headercur,"name-function-call",function(){
+							generatefromeasy(headercur,true)
+						})
+						ifclass(headercur,"area-arg-function-call",function(){
+							code.value += "("
+							generatefromeasy(headercur,true)
+							code.value += ")"
+							if(!smallarea){
+								code.value += ";\n"
+							}
+						})
+					})
+				})
+			})
+			// code.value += "*/"
+		})
+
+		ifclass(cur,"block-while",function(){
+			code.value += tab + "while"
+			foreachchild(cur,function(blockcur){
+				ifclass(blockcur,"header",function(){
+					foreachchild(blockcur,function(headercur){
+						ifclass(headercur,"area-arg",function(){
+							code.value += "("
+							// smallarea = true
+							generatefromeasy(headercur,true)
+							code.value += ")"
+						})
+					})
+				})
+				ifclass(blockcur,"area-content",function(){
+					code.value += "{\n"
+					// smallarea = false
+					generatefromeasy(blockcur,false)
+					code.value += tab + "}\n"
+				})
+			})
+		})
+
+		ifclass(cur,"block-do",function(){
+			code.value += tab + "do"
+			foreachchild(cur,function(blockcur){
+				ifclass(blockcur,"area-content",function(){
+					code.value += "{\n"
+					// smallarea = false
+					generatefromeasy(blockcur,false)
+					code.value += tab + "}"
+				})
+
+				ifclass(blockcur,"header",function(){
+					foreachchild(blockcur,function(headercur){
+						ifclass(headercur,"area-arg",function(){
+							code.value += "while"
+							code.value += "("
+							// smallarea = true
+							generatefromeasy(headercur,true)
+							code.value += ")"
+						})
+					})
+				})
+			})
+		})
+
+		ifclass(cur,"block-for",function(){
+			code.value += tab + "for"
+			foreachchild(cur,function(blockcur){
+				ifclass(blockcur,"header",function(){
+					foreachchild(blockcur,function(headercur){
+						ifclass(headercur,"area-arg-for-1",function(){
+							code.value += "("
+							// smallarea = true
+							generatefromeasy(headercur,true)
+							code.value += ";"
+						})
+						ifclass(headercur,"area-arg-for-2",function(){
+							// smallarea = true
+							generatefromeasy(headercur,true)
+							code.value += ";"
+						})
+						ifclass(headercur,"area-arg-for-3",function(){
+							// smallarea = true
+							generatefromeasy(headercur,true)
+							code.value += ")"
+						})
+					})
+				})
+				ifclass(blockcur,"area-content",function(){
+					// smallarea = false
+					code.value += "{\n"
+					generatefromeasy(blockcur,false)
+					code.value += tab + "}\n"
+				})
+			})
+		})
+
+		ifclass(cur,"block-equal",function(){
+			foreachchild(cur,function(blockcur){
+				ifclass(blockcur,"header",function(){
+					foreachchild(blockcur,function(headercur){
+						ifclass(headercur,"area-arg-equal-1",function(){
+							// smallarea = true
+							generatefromeasy(headercur,true)
+							code.value += "="
+						})
+						ifclass(headercur,"area-arg-equal-2",function(){
+							// smallarea = true
+							generatefromeasy(headercur,true)
+							if(!smallarea){
+								code.value += ";\n"
+							}
+						})
+					})
+				})
+			})
+		})
+
+		ifclass(cur,"block-greaterthan",function(){
+			foreachchild(cur,function(blockcur){
+				ifclass(blockcur,"header",function(){
+					foreachchild(blockcur,function(headercur){
+						ifclass(headercur,"area-arg-greaterthan-1",function(){
+							// smallarea = true
+							generatefromeasy(headercur,true)
+							code.value += ">"
+						})
+						ifclass(headercur,"area-arg-greaterthan-2",function(){
+							// smallarea = true
+							generatefromeasy(headercur,true)
+							if(!smallarea){
+								code.value += ";\n"
+							}
+						})
+					})
+				})
+			})
+		})
+
+		ifclass(cur,"block-lessthan",function(){
+			foreachchild(cur,function(blockcur){
+				ifclass(blockcur,"header",function(){
+					foreachchild(blockcur,function(headercur){
+						ifclass(headercur,"area-arg-lessthan-1",function(){
+							// smallarea = true
+							generatefromeasy(headercur,true)
+							code.value += "<"
+						})
+						ifclass(headercur,"area-arg-lessthan-2",function(){
+							// smallarea = true
+							generatefromeasy(headercur,true)
+							if(!smallarea){
+								code.value += ";\n"
+							}
+						})
+					})
+				})
+			})
+		})
+
+
+		ifclass(cur,"block-equalequal",function(){
+			foreachchild(cur,function(blockcur){
+				ifclass(blockcur,"header",function(){
+					foreachchild(blockcur,function(headercur){
+						ifclass(headercur,"area-arg-equalequal-1",function(){
+							// smallarea = true
+							generatefromeasy(headercur,true)
+							code.value += "<"
+						})
+						ifclass(headercur,"area-arg-equalequal-2",function(){
+							// smallarea = true
+							generatefromeasy(headercur,true)
+							if(!smallarea){
+								code.value += ";\n"
+							}
+						})
+					})
+				})
+			})
+		})
+
+		ifclass(cur,"block-include",function(){
+			foreachchild(cur,function(blockcur){
+				ifclass(blockcur,"header",function(){
+					foreachchild(blockcur,function(headercur){
+						ifclass(headercur,"area",function(){
+							// smallarea = true
+							code.value += "#include "
+							code.value += headercur.textContent
+							code.value += "\n"
+						})
+					})
+				})
+			})
+		})
+
+		ifclass(cur,"block-hashstart",function(){
+			foreachchild(cur,function(blockcur){
+				ifclass(blockcur,"header",function(){
+					foreachchild(blockcur,function(headercur){
+						ifclass(headercur,"area",function(){
+							// smallarea = true
+							code.value += "#"
+							code.value += headercur.textContent + "\n"
+						})
+					})
+				})
+			})
+		})
+
+		ifclass(cur,"block-goto-label",function(){
+			foreachchild(cur,function(blockcur){
+				ifclass(blockcur,"header",function(){
+					foreachchild(blockcur,function(headercur){
+						ifclass(headercur,"area",function(){
+							// smallarea = true
+							code.value += headercur.textContent
+							code.value += ":\n"
+						})
+					})
+				})
+			})
+		})
+		ifclass(cur,"block-struct",function(){
+			code.value += tab + "struct "
+			foreachchild(cur,function(blockcur){
+				ifclass(blockcur,"header",function(){
+					foreachchild(blockcur,function(headercur){
+						ifclass(headercur,"area-arg-1",function(){
+							// smallarea = true
+							code.value += headercur.textContent
+							code.value += " "
+						})
+						ifclass(headercur,"area-arg-2",function(){
+							// smallarea = true
+							code.value += headercur.textContent
+							code.value += ";\n"
+						})
+					})
+				})
+			})
+		})
+
+
+		ifclass(cur,"block-struct-def",function(){
+			code.value += tab + "struct "
+			foreachchild(cur,function(blockcur){
+				ifclass(blockcur,"header",function(){
+					foreachchild(blockcur,function(headercur){
+						ifclass(headercur,"area-arg-1",function(){
+							code.value += headercur.textContent
+							code.value += " "
+						})
+					})
+				})
+				ifclass(blockcur,"area",function(){
+					// smallarea = false
+					code.value += "{\n"
+					generatefromeasy(blockcur,false)
+					code.value += tab + "}\n"
+				})
+			})
+		})
+
+		ifclass(cur,"block-switch",function(){
+			code.value += tab + "switch"
+			foreachchild(cur,function(blockcur){
+				ifclass(blockcur,"header",function(){
+					foreachchild(blockcur,function(headercur){
+						ifclass(headercur,"area-arg-1",function(){
+							code.value += "("
+							// smallarea = true
+							generatefromeasy(headercur,true)
+							code.value += ")"
+						})
+					})
+				})
+				ifclass(blockcur,"area",function(){
+					code.value += "{\n"
+					// smallarea = false
+					generatefromeasy(blockcur,false)
+					code.value += tab + "}\n"
+				})
+			})
+		})
+
+
+		ifclass(cur,"block-sizeof",function(){
+			code.value += "sizeof("
+			foreachchild(cur,function(blockcur){
+				ifclass(blockcur,"header",function(){
+					foreachchild(blockcur,function(headercur){
+						ifclass(headercur,"area",function(){
+							// smallarea = true
+							generatefromeasy(headercur,true)
+						})
+					})
+				})
+			})
+			code.value += ")"
+		})
+
+		ifclass(cur,"block-break",function(){
+			code.value += "break;\n"
+		})
+		ifclass(cur,"block-continue",function(){
+			code.value += "continue;\n"
+		})
+
+		ifclass(cur,"block-folder",function(){
+			foreachchild(cur,function(blockcur){
+				ifclass(blockcur,"foldable-content",function(){
+					foreachchild(blockcur,function(headercur){
+						ifclass(headercur,"area",function(){
+								generatefromeasy(headercur,false)
+						})
+					})
+				})
+			})
+		})
+		// TODO adding all the remaining blocks
+
+		ifclass(cur,"block-invarea",function(){
+			foreachchild(cur,function(blockcur){
+				ifclass(blockcur,"header",function(){
+					foreachchild(blockcur,function(headercur){
+						ifclass(headercur,"area",function(){
+
+								// if first character is \w or \s then add space
+								if(headercur.textContent.substr(0,1).match(/(\s|\w)/g)){					
+									// if last character is \w then add space
+									if(code.value.substr(-1).match(/\w/g)){
+										code.value += " " 
+									}
+								}
+								// smallarea = true
+								generatefromeasy(headercur,true)
+						})
+					})
+				})
+			})
+		})
+
+		ifclass(cur,"block-varea",function(){
+			foreachchild(cur,function(blockcur){
+				ifclass(blockcur,"area",function(){
+					// code.value += blockcur.textContent
+					// smallarea = true
+					generatefromeasy(blockcur,true)
+					if(!smallarea){
+						code.value += ";\n" //TODO this is causing problems 
+					}
+				})
+			})
+		})
+
+		ifclass(cur,"block-datatype",function(){
+			if(code.value.substr(-1).match(/\w/g)){
+				code.value += " " 
+			}
+			code.value += cur.textContent 
+			// + " "
+		})
+
+
+
+		})
+		
+		iftext(cur,function(){
+			if(smallarea){
+				code.value += cur.textContent //normal text inside area
+			}else{
+				code.value += tab + cur.textContent + "\n" //normal text inside area
+			}
+
+		})
+	})
+	smallarea = cursmallarea;
+	indentend()
+}
+// generate from easy end //
+
+
+// old generatefrom
+
+// function generatefrom(curarea){
+// 	tabs = tabs+1
+// 	tab = "	".repeat(tabs)
+// 	curarea.childNodes.forEach(function(cur){
+// 		if (cur.classList){
+// 		if (cur.classList.contains("block")) {
+// 			if (cur.classList.contains("block-if")) {
+// 				code.value += tab + "if"
+// 				cur.childNodes.forEach(function(ifcur){
+// 					if (ifcur.classList){
+// 					if (ifcur.classList.contains("header-if")) {
+// 						ifcur.childNodes.forEach(function(headerifcur){
+// 							if (headerifcur.classList) {
+// 							if (headerifcur.classList.contains("area-arg-if")) {
+// 								code.value += "(" + headerifcur.textContent + ")"
+// 							}
+// 							}
+// 						})
+// 					}
+// 					if (ifcur.classList.contains("area-if")) {
+// 						code.value += "{\n"
+// 						generatefrom(ifcur)
+// 					}
+// 					if (ifcur.classList.contains("content-else")) {
+// 						if(ifcur.style.display === "block"){
+// 						ifcur.childNodes.forEach(function(contentelsecur){
+// 							if (contentelsecur.classList) {
+// 							if (contentelsecur.classList.contains("area-else")) {
+// 							code.value += tab + "}else{\n"
+// 							generatefrom(contentelsecur)
+// 								code.value += tab + "}\n"
+// 							}
+// 							}
+// 						})
+// 						}else{
+// 							code.value += tab + "}\n"
+// 						}
+// 					}
+// 					}
+// 				})
+// 			}	
+// 		}
+// 		}else{ //no classList
+// 			code.value += tab + cur.textContent + "\n" //normal text inside area
+// 		}
+// 	})
+// 	tabs = tabs-1
+// 	if (tabs >= 0){
+// 		tab = "	".repeat(tabs)
+// 	}
+// }
+
+area.ondblclick = function(ev){
+  ev.preventDefault();
+
+  console.log("dbl clicked")
+}
+
+
+
+// function enterblock(){
+//   console.log("enterblock" + this.id)
+// }
+
+
+// newblock = block.cloneNode(true)
+// newblock.id="newblock"
+
+// area.appendChild(newblock);
+
+blockid=0;
+function allowDrop(ev) {
+  ev.preventDefault();
+}
+
+function drag(ev) {
+  ev.dataTransfer.setData("text", ev.target.id);
+}
+
+makenew = false;
+
+roota = ""
+rootb = document.createElement("div")
+
+depth = 1;
+
+function deep(node){
+
+
+	// console.log(depth + node.id)
+
+	if (node.classList){
+		if (node.classList.contains("block")){
+			blockid = blockid + 1;
+			node.id = "block"+blockid;
+			if (coloring){
+				node.style.background=random_bg_color(node.classList);
+			}
+		}
+	}
+
+
+	depth = depth+1
+	node.childNodes.forEach(deep);
+	depth = depth-1
+}
+
+
+function droptemplates(ev){
+  // ev.preventDefault();
+  // var data = ev.dataTransfer.getData("text");
+
+  // newdata = document.getElementById(data)
+  // ev.target.appendChild(newdata);
+  drop(ev)
+}
+
+function removedrop(ev) {
+  ev.preventDefault();
+  var data = ev.dataTransfer.getData("text");
+
+  if (!makenew && document.getElementById(data).parentNode !== templates){
+  	document.getElementById(data).remove();
+  }
+
+}
+
+function drop(ev) {
+  ev.preventDefault();
+  var data = ev.dataTransfer.getData("text");
+  if (ev.target.classList.contains("area")){
+
+	if (makenew || document.getElementById(data).parentNode == templates){
+	  newdata = newblock(data)
+	  
+	}else{
+	  newdata = document.getElementById(data)
+
+	}
+	var marginbefore = document.getElementsByClassName('marginbefore');
+    for (let i = 0; i < marginbefore.length; i++) {
+	    if (marginbefore[i].classList) {
+			marginbefore[i].classList.remove('marginbefore')
+	  	}
+	}
+	ifnotclass(ev.target,"varea",function(){
+
+		  for (let i = 0; i < ev.target.childNodes.length; i++) {
+		    if ((ev.clientY + scrollY) > ev.target.childNodes[i].offsetTop-50 && (ev.clientY + scrollY) < ev.target.childNodes[i].offsetTop + 10){
+		  		console.log(i)
+		  		// if (ev.target.childNodes[i].classList) {
+		  			ev.target.insertBefore(newdata,ev.target.childNodes[i]);
+			  		// ev.target.childNodes[i].classList.add('marginafter')
+		  		// }
+		  	}
+		  }
+
+	})
+
+	ifclass(ev.target,"varea",function(){
+
+		  for (let i = 0; i < ev.target.childNodes.length; i++) {
+		    if ((ev.clientX) > ev.target.childNodes[i].offsetLeft-70 && (ev.clientX) < ev.target.childNodes[i].offsetLeft + 20){
+		  		console.log(i)
+		  		// if (ev.target.childNodes[i].classList) {
+		  			ev.target.insertBefore(newdata,ev.target.childNodes[i]);
+			  		// ev.target.childNodes[i].classList.add('marginafter')
+		  		// }
+		  	}
+		  }
+
+	})
+
+  if(ev.target.childNodes.length==0){
+  	  ev.target.appendChild(newdata);
+  }else{
+
+	ifnotclass(ev.target,"varea",function(){
+	  	if(ev.clientY + scrollY > (ev.target.childNodes[ev.target.childNodes.length-1].offsetTop + ev.target.childNodes[ev.target.childNodes.length-1].offsetHeight)){
+	  		  ev.target.appendChild(newdata);
+	  	}
+	})
+	ifclass(ev.target,"varea",function(){
+	  	if(ev.clientX > (ev.target.childNodes[ev.target.childNodes.length-1].offsetLeft + ev.target.childNodes[ev.target.childNodes.length-1].offsetWidth)){
+	  		  ev.target.appendChild(newdata);
+	  	}
+	})
+
+  }
+
+  newdata.getElementsByClassName("area")[0].click();
+  }
+
+  generatecode()
+}
+
+ function random_bg_color(classList) { 
+ 	if(classList.contains("block-if")){
+	 	var h = 10 + Math.floor(Math.random() * 30); //60-20
+	 	var s = 50;
+	 	var l = 25;
+	 	return "hsl(" + h + "," + s + "%," + l + "%)"
+	 	// https://www.w3schools.com/colors/colors_hsl.asp
+	 }else if(classList.contains("block-while")){
+	 	var h = 60 + 20 + Math.floor(Math.random() * 30); //60-20
+	 	var s = 50;
+	 	var l = 25;
+	 	return "hsl(" + h + "," + s + "%," + l + "%)"
+	 	// https://www.w3schools.com/colors/colors_hsl.asp
+	 }else if(classList.contains("block-for")){
+	 	var h = (60*2) + 20 + Math.floor(Math.random() * 30); //60-20
+	 	var s = 50;
+	 	var l = 25;
+	 	return "hsl(" + h + "," + s + "%," + l + "%)"
+	 	// https://www.w3schools.com/colors/colors_hsl.asp
+	 }else if(classList.contains("block-equal")){
+	 	var h = (60*3) + 20 + Math.floor(Math.random() * 30); //60-20
+	 	var s = 50;
+	 	var l = 25;
+	 	return "hsl(" + h + "," + s + "%," + l + "%)"
+	 	// https://www.w3schools.com/colors/colors_hsl.asp
+	 }else if(classList.contains("block-varea")){
+	 	var h = 10 + Math.floor(Math.random() * 40); //60-20
+	 	var s = 0;
+	 	var l = 50;
+	 	return "rgba(0,0,0,0.5)"
+	 	// https://www.w3schools.com/colors/colors_hsl.asp
+	 // }else if(classList.contains("block-datatype")){
+	 // 	return null;
+	 // 	// https://www.w3schools.com/colors/colors_hsl.asp
+	 }else if(classList.contains("block-function-call")){
+	 	var h = Math.floor(Math.random() * 360); //60-20
+	 	var s = Math.floor(Math.random() * 100);
+	 	var l = 50;
+	 	return "hsl(" + h + "," + s + "%," + l + "%)"
+	 	// https://www.w3schools.com/colors/colors_hsl.asp
+	 }else{
+	 	var r = 100 + Math.floor(Math.random() * 50);
+	 	var g = 100 + Math.floor(Math.random() * 50);
+	 	var b = 100 + Math.floor(Math.random() * 50);
+	 	return "rgba(" + r + "," + g + "," + b +  ", 0.5" + ")"; 
+ 	}
+
+ 	// var r = 100 + Math.floor(Math.random() * 50);
+ 	// var g = 100 + Math.floor(Math.random() * 50);
+ 	// var b = 100 + Math.floor(Math.random() * 50);
+ 	// return "rgba(" + r + "," + g + "," + b +  ", 0.5" + ")"; 
+}
+
+selectedchildren = ""
+function blockclick(ev){
+}
+function areaclick(ev){
+  	if (ev.target.classList.contains("area")){
+  		if (!ev.target.childElementCount){
+
+			ev.target.parentNode.appendChild(input)
+
+			input.style.position="absolute"
+			input.style.top=ev.target.offsetTop + "px"
+			input.style.left=ev.target.offsetLeft + "px"
+			input.style.width=ev.target.offsetWidth - 5 + "px"
+			newev=ev
+			// selectedchildren = block.cloneNode(true)
+			if (ev.target.childNodes.length>0){
+				input.value = ev.target.childNodes.item(0).data;
+			}
+			input.focus();
+			input.select();
+			selected = ev.target
+			ss = selected
+		}else{
+			
+
+			// todo create a temp block that decide appropriate block 
+			selected = ev.target
+
+			inputblock = newblock("block-input")
+			
+			ifclass(ev.target,"varea",function(){
+				inputblock.classList.add("varea")
+			})
+
+			ev.target.appendChild(inputblock)
+			
+			// temporary solution
+			inputblock.click()
+			// todo append 
+
+
+		}
+	}
+}
+inputblock = null
+function outclick(ev){
+	templates.classList.remove("foundtemplates");
+	input.style.top=""
+	input.style.left=""
+	document.body.appendChild(input)
+	// selected.appendChild(selectedchildren);
+	if (input.value==""){
+		if(selected.childNodes.length == 1){
+			selected.removeChild(selected.childNodes[0])
+		}
+		
+		ifclass(selected,"block-input",function(){
+			selected.remove();		
+		})
+
+
+	}
+
+	rebuiltarea.textContent = ""
+	hasvarea = 0 
+	ifclass(selected,"varea",function(){
+		hasvarea = 1
+	})
+
+	hasforcetext = 0 
+	ifclass(selected,"forcetext",function(){
+		hasforcetext = 1
+	})
+
+	hasblockvarea = 0 
+	if(selected.parentNode){
+		ifclass(selected.parentNode.parentNode,"block-invarea",function(){
+			hasblockvarea = 1
+		})
+	}
+	
+	selected.textContent = ""
+
+	if(hasforcetext){
+		selected.textContent = input.value
+	}else{
+		blockfrom(input.value, hasvarea,hasblockvarea,hasforcetext,selected)
+	}
+
+	// if (rebuiltarea.childNodes.length > 0){
+	// 	if(selected.childNodes.length == 1){
+	// 		selected.removeChild(selected.childNodes[0])
+	// 	}
+	// }
+
+	// rebuiltarea.childNodes.forEach(function(child){
+	// 	selected.appendChild(child)
+	// })
+ 	
+
+
+	if (selected.childNodes.length>0){
+	selected.childNodes.item(0).data = input.value;
+	}else{
+	selected.textContent = input.value;
+	}
+
+
+	// ifnotclass(selected,"block-input",function(){
+		// selected = selected.parentNode
+	// 
+
+	// ev.preventDefault();
+	// selected.contentEditable = false;		
+	
+	// ifnotclass(selected,"block-input",function(){
+
+	// })
+	selected = null;
+	input.value = ""
+
+	
+	if(inputblock){
+		selected = inputblock.parentNode
+		inputblock.outerHTML = inputblock.innerHTML
+		selected.click()
+	// ifclass(selected,"block-input",function(){
+	// 	selected = inwhichblock(selected.parentNode).parentNode.parentNode
+	// 	selected.click()
+
+	// })
+		first = inputblock.getElementsByClassName("area")[0]
+		if(first){
+			first.click();
+		}
+	}
+
+
+	removeinputs()
+	generatecode()
+}
+keyw = "";
+function check(node){
+	// console.log(node)
+	if(node.classList){
+		node.classList.remove("found")
+		if(node.textContent.includes(keyw)){
+			node.classList.add("found")
+		}
+	}
+}
+
+function searchtemplate(keywords) {
+	templates.classList.add("foundtemplates");
+	keyw = keywords;
+	templates.childNodes.forEach(check);
+}
+
+function inputkeydown(event){
+	selected.textContent = input.value;
+	input.style.width=selected.offsetWidth + 5 + "px"
+	if(event.key == "Backspace"){
+		if(!input.value){
+
+			a = inwhichblock(selected)
+			ifclass(a,"block-input",function(){
+				if(a.previousElementSibling){
+					prev = gotoprevblock(a.previousElementSibling)
+					prev.remove()
+
+				}else{
+					if(a.parentNode){
+						inwhichblock(a.parentNode).remove()
+					}else{
+						
+					}	
+				}
+			})
+			ifnotclass(a,"block-input",function(){
+				a.remove()
+			})
+
+			// lprev = gotoprevblock(prev.previousElementSibling)
+
+			input.style.position="absolute"
+			input.style.top=selected.offsetTop + "px"
+			input.style.left=selected.offsetLeft + "px"
+			input.style.width=selected.offsetWidth - 5 + "px"
+		}
+	}
+}
+
+selectedareano = 0
+
+
+$(document).keydown(function(objEvent) {
+    if (objEvent.keyCode == 9) {  //tab pressed
+        objEvent.preventDefault(); // stops its action
+    }
+})
+
+
+function gotoprevblock(sel){
+
+	ret = false
+	ifclass(sel,"block", function(){
+		ret = true
+	})
+	if(ret){
+		return sel
+	}
+
+}
+
+function gotonextarea(sel){
+	console.log("gotonextarea\n")
+	if(!sel){
+		return null
+	}
+	ret = false
+	ifclass(sel,"area", function(){
+		
+		if(!sel.childElementCount){
+
+			ret = true
+			console.log("found area\n")
+		}
+
+
+	})
+
+
+	if(ret){
+		return sel
+	}else{
+
+
+	result = null
+	// ifnotclass(sel,"area", function(){
+			if(sel.childNodes[0]){
+				console.log("checking firstchild \n")
+				result = gotonextarea(sel.childNodes[0])
+			}else{
+				if(sel.nextElementSibling){
+					console.log("checking sibling \n")
+					result = gotonextarea(sel.nextElementSibling)
+				}else{
+					if(sel.parentNode.id !== "area"){
+
+						if(sel.parentNode.nextElementSibling){
+							console.log("go up and checking sibling \n")
+							result = gotonextarea(sel.parentNode.nextElementSibling)
+						}else{
+							xsel = sel
+							while(!xsel.nextElementSibling){
+							console.log("keep going up and checking sibling \n")
+								if(xsel.parentNode.id !== "area"){
+									xsel = xsel.parentNode
+								}else{
+									return null
+								}
+							}
+							result = gotonextarea(xsel.nextElementSibling)
+						} 
+
+	// Todo testing this if incase 'loop' never stops
+
+					}else{
+						return null 
+					}
+				}
+			}
+	// })
+
+	return result
+	}
+}
+
+function inwhichblock(area){
+	ifnotclass(area,"block",function(){
+		area = inwhichblock(area.parentNode)
+	})
+	return area;
+}
+
+function inputkeyup(event){
+	// event.preventDefault();
+	templates.classList.remove("foundtemplates");
+	sev=event;
+	if (event.key == "Enter" || event.key == "Tab"){
+	// if (event.key == "Enter"){
+		// input.blur();
+	// }else if(event.key == "Tab"){
+		sel = selected
+		oldsel = selected
+		console.log("tab")
+		// using function 
+		if(!sel){
+			console.log("no sel 1")
+
+	
+			removeinputs() //because outclick is not called in this 
+			generatecode()
+			
+						// todo create a temp block that decide appropriate block 
+			selpar = inwhichblock(oldsel).parentNode
+
+			inputblock = newblock("block-input")
+			
+			ifclass(selpar,"varea",function(){
+				inputblock.classList.add("varea")
+			})
+
+
+			selpar.appendChild(inputblock)
+			
+			// temporary solution
+			inputblock.click()
+			// todo append 
+
+		}else{
+			
+			outclick(event)
+
+			sel = gotonextarea(sel.childNodes[0])
+			
+			if(sel){
+				sel.click();
+			}else{
+				console.log("no sel")
+
+							// todo create a temp block that decide appropriate block 
+				selpar = inwhichblock(oldsel).parentNode
+				inputblock = newblock("block-input")
+				
+				ifclass(selpar,"varea",function(){
+					inputblock.classList.add("varea")
+				})
+
+				selpar.appendChild(inputblock)
+				
+				// temporary solution
+				inputblock.click()
+				// todo append 
+
+			}
+			
+		}
+		
+		// input.value = selected.textContent;		
+
+
+
+	// todo going to previous area using arrow keys
+
+	}else{
+		// console.log(input.value)
+		searchtemplate(input.value);
+	}
+
+}
+
+function inputkeydowndocument(event){
+  sev=event;
+	if (event.key == "Control"){
+		makenew=true;
+	}
+}
+document.addEventListener("keydown", inputkeydowndocument, false);
+
+function inputkeyupdocument(event){
+  sev=event;
+	if (event.key == "Control"){
+		makenew=false;
+	}
+}
+document.addEventListener("keyup", inputkeyupdocument, false);
+
+
+$(document).on('drop','.area',function(e){
+	// console.log(e.originalEvent.dataTransfer.getData("data"));
+  $(this).removeClass('hover');
+	var marginbefore = document.getElementsByClassName('marginbefore');
+    for (let i = 0; i < marginbefore.length; i++) {
+	    if (marginbefore[i].classList) {
+			marginbefore[i].classList.remove('marginbefore')
+	  	}
+	}
+  // console.log(e);
+});
+
+$(document).on('dragover','.block',function(e){
+  e.preventDefault();
+
+	var marginbefore = document.getElementsByClassName('marginbefore');
+    for (let i = 0; i < marginbefore.length; i++) {
+	    if (marginbefore[i].classList) {
+			marginbefore[i].classList.remove('marginbefore')
+	  	}
+	}
+  // for (let i = 0; i < e.target.parentNode.childNodes.length; i++) {
+  //   if (e.target.childNodes[i].classList) {
+		// e.target.childNodes[i].classList.remove('marginbefore')
+  // 	}
+  ifnotclass(e.target.parentNode,"varea",function(){
+
+    if ((e.clientY + scrollY) > e.target.offsetTop-20 && (e.clientY + scrollY) < e.target.offsetTop+50){
+  		// console.log(i)
+  		if (e.target.classList) {
+	  		e.target.classList.add('marginbefore')
+  		}
+  		// break;
+  	}
+  })
+
+  ifclass(e.target.parentNode,"varea",function(){
+
+    if ((e.clientX) > e.target.offsetLeft-20 && (e.clientX) < e.target.offsetLeft+20){
+  		// console.log(i)
+  		if (e.target.classList) {
+	  		e.target.classList.add('marginbefore')
+  		}
+  		// break;
+  	}
+  })
+
+  // }
+
+});
+
+
+
+$(document).on('dragover','.area',function(e){
+  e.preventDefault();
+
+
+  $(this).addClass('hover');
+  ifnotclass(e.target,"varea",function(){
+
+	  for (let i = 0; i < e.target.childNodes.length; i++) {
+
+	    if ((e.clientY + scrollY) > e.target.childNodes[i].offsetTop-50 && (e.clientY + scrollY) < e.target.childNodes[i].offsetTop+50){
+	  		// console.log(i)
+	  		if (e.target.childNodes[i].classList) {
+		  		e.target.childNodes[i].classList.add('marginbefore')
+	  		}
+	  		// break;
+	  	}else{
+		    if (e.target.childNodes[i].classList) {
+				e.target.childNodes[i].classList.remove('marginbefore')
+		  	}
+
+	  	}
+
+	  }
+  })
+
+  ifclass(e.target,"varea",function(){
+
+	  for (let i = 0; i < e.target.childNodes.length; i++) {
+
+	    if ((e.clientX) > e.target.childNodes[i].offsetLeft-20 && (e.clientX) < e.target.childNodes[i].offsetLeft+20){
+	  		// console.log(i)
+	  		if (e.target.childNodes[i].classList) {
+		  		e.target.childNodes[i].classList.add('marginbefore')
+	  		}
+	  		// break;
+	  	}else{
+		    if (e.target.childNodes[i].classList) {
+				e.target.childNodes[i].classList.remove('marginbefore')
+		  	}
+
+	  	}
+
+	  }
+  })
+
+
+});
+
+
+
+
+$(document).on('dragleave','.area',function(e){
+  $(this).removeClass('hover');
+
+	var marginbefore = document.getElementsByClassName('marginbefore');
+    for (let i = 0; i < marginbefore.length; i++) {
+	    if (marginbefore[i].classList) {
+			marginbefore[i].classList.remove('marginbefore')
+	  	}
+	}
+
+});
+
+
+$(document).on('click','.foldable',function(e){
+  this.classList.toggle('active');
+  var content = this.nextElementSibling;
+    if (content.style.display === "block") {
+      content.style.display = "none";
+    } else {
+      content.style.display = "block";
+    }
+
+    	generatecode()
+
+});
+
+// var coll = document.getElementsByClassName("foldable-else");
+// var i;
+
+// for (i = 0; i < coll.length; i++) {
+//   coll[i].addEventListener("click", function() {
+//     this.classList.toggle("active");
+//     var content = this.nextElementSibling;
+//     if (content.style.display === "block") {
+//       content.style.display = "none";
+//     } else {
+//       content.style.display = "block";
+//     }
+//   });
+// }
+datatypes.forEach(function(cur){
+	curdatatype = newblock("block-datatype")
+	curdatatype.textContent = cur
+	templates.appendChild(curdatatype)
+})
+
+</script>
+
+</body>
+</html>
